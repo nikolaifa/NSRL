@@ -24,6 +24,9 @@ class NSRLCreate:
 
             if not value:
                 db.put(key, json.dumps(row).encode('utf-8'))
+            
+            else:
+                print("test")
 
 # ==================
 #  NSRL File Record
