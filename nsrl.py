@@ -1,7 +1,7 @@
 
 import logging
 import json
-from plyvel import DB
+import plyvel
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class NSRL(object):
         return entries
 
 
-class NSRLCreate(DB):
+class NSRLCreate(plyvel.DB):
     key = None
     
     @classmethod
