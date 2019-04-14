@@ -5,9 +5,45 @@ import plyvel
 
 log = logging.getLogger(__name__)
 
+class NSRL(object):
+
+    def __init__(self,
+                 nsrl_file,
+                 nsrl_product,
+                 nsrl_os, nsrl_manufacturer,
+                 **kwargs):
+        # TODO: need to specify paths in constructor,
+        # temporary pass via kwargs
+        self.nsrl_file = NSRLFile(nsrl_file)
+        self.nsrl_product = NSRLProduct(nsrl_product)
+        self.nsrl_os = NSRLOS(nsrl_os)
+        self.nsrl_manufacturer = NSRLManufacturer(nsrl_manufacturer)
+
+    def lookup_by_sha1(self, sha1sum):
+        operations = [
+            (sha1sum, 'SHA-1', self.nsrl_file, None),
+            (None, 'ProductCode', self.nsrl_product, 'SHA-1'),
+            (None, 'OpSystemCode', self.nsrl_os, 'SHA-1'),
+            (None, 'MfgCode', self.nsrl_manufacturer, 'ProductCode')
+        ]
+        entries = dict((name, {}) for (_, name, _, _) in operations)
+
+        for value, key, database, where in operations:
+            if value:
+                entries[key][value] = database.get(bytes(value))
+            else:
+                subkeys = set()
+                for subkey, subitem in list(entries[where].items()):
+                    if not isinstance(subitem, list):
+                        subitem = [subitem]
+                    subkeys.update([x[key] for x in subitem])
+                for subkey in subkeys:
+                    entries[key][subkey] = database.get(bytes(subkey))
+
+        return entries
 
 
-class NSRLCreate:
+class NSRLCreate(plyvel):
     key = None
     
     @classmethod
@@ -17,7 +53,7 @@ class NSRLCreate:
         csv_file = open(records, 'r')
         csv_entries = DictReader(csv_file)
 
-        db = plyvel.DB(dbfile, **kwargs, create_if_missing=True)
+        db = DB(dbfile, **kwargs, create_if_missing=True)
         try:
             for row in csv_entries:
                 key = bytes(row.pop(cls.key), 'utf-8')
@@ -34,7 +70,9 @@ class NSRLCreate:
             
         except UnicodeDecodeError:
             i += 1
-        print(i)
+        print("Number of non-unicode hex: ", i)
+
+        return db
 # ==================
 #  NSRL File Record
 # ==================
@@ -42,14 +80,20 @@ class NSRLCreate:
 class NSRLFile(NSRLCreate):
 
     key = "SHA-1"
+    def __init__(self, db, **kwargs):
+        # give default_dir value somewhere
+        super(NSRLFile, self).create_database(db, 'NSRLFile.txt', **kwargs)
 
 # =================
 #  NSRL OS Record
 # =================
 
-class NSRLOs(NSRLCreate):
+class NSRLOS(NSRLCreate):
 
     key = "OpSystemCode"
+    def __init__(self, db, **kwargs):
+        # give default_dir value somewhere
+        super(NSRLOS, self).create_database(db, 'NSRLOS.txt', **kwargs)
 
 # ================
 #  NSRL OS Record
@@ -58,6 +102,9 @@ class NSRLOs(NSRLCreate):
 class NSRLManufacturer(NSRLCreate):
 
     key = "MfgCode"
+    def __init__(self, db, **kwargs):
+        # give default_dir value somewhere
+        super(NSRLManufacturer, self).create_database(db, 'NSRLMfg.txt', **kwargs)
 
 # =====================
 #  NSRL Product Record
@@ -66,6 +113,9 @@ class NSRLManufacturer(NSRLCreate):
 class NSRLProduct(NSRLCreate):
 
     key = "ProductCode"
+    def __init__(self, db, **kwargs):
+        # give default_dir value somewhere
+        super(NSRLProduct, self).create_database(db, 'NSRLProd.txt', **kwargs)
 
 
 if __name__ == '__main__':
@@ -81,7 +131,7 @@ if __name__ == '__main__':
 
     nsrl_databases = {
         'file':         NSRLFile,
-        'os':           NSRLOs,
+        'os':           NSRLOS,
         'manufacturer': NSRLManufacturer,
         'product':      NSRLProduct,
     }
@@ -91,7 +141,15 @@ if __name__ == '__main__':
         nsrl_databases[database_type].create_database(kwargs['database'],
                                                       kwargs['filename'])
 
-
+    def nsrl_get(**kwargs):
+        database_type = kwargs['type']
+        database = nsrl_databases[database_type](kwargs['database'])
+        value = database.get(bytes(kwargs['key']))
+        print(("key {0}: value {1}".format(kwargs['key'], value)))
+    
+    def nnsrl_test(**kwargs):
+        sha1sum = kwargs['sha']
+        
     ##########################################################################
     # arguments
     ##########################################################################
@@ -122,6 +180,23 @@ if __name__ == '__main__':
                                type=str,
                                help='database to store NSRL records')
     create_parser.set_defaults(func=nsrl_create_database)
+
+    # create the scan parser
+    get_parser = subparsers.add_parser('get',
+                                       help='get the entry from database')
+    get_parser.add_argument('-t',
+                            '--type',
+                            type=str,
+                            choices=['file', 'os', 'manufacturer', 'product'],
+                            help='type of the record')
+    get_parser.add_argument('database',
+                            type=str,
+                            help='database to read NSRL records')
+    get_parser.add_argument('key',
+                            type=str,
+                            help='key to retreive')
+    get_parser.set_defaults(func=nsrl_get)
+
 
     args = parser.parse_args()
 
