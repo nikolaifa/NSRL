@@ -43,9 +43,11 @@ class NSRL(object):
         return entries
 
 
-class NSRLCreate(plyvel.DB):
+class NSRLCreate:
     key = None
     
+#    def get(self, ):
+
     @classmethod
     def create_database(cls, dbfile, records, **kwargs):
         i = 0
@@ -66,13 +68,16 @@ class NSRLCreate(plyvel.DB):
                 else:
                     db.delete(key)
                     existing_entry = json.loads(value.decode('utf-8'))
-                    merged_entry = {key: value for (key, value) in dict(list(existing_entry.items()) + list(row.items())).items() }
-            
+                    row = { key: value for (key, value) in dict(list(existing_entry.items()) + list(row.items())).items() }
+                    row = json.dumps(merged_entry).encode('utf-8')
+                    db.put(key, row)
+
         except UnicodeDecodeError:
             i += 1
         print("Number of non-unicode hex: ", i)
 
         return db
+
 # ==================
 #  NSRL File Record
 # ==================
