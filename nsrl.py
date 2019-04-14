@@ -1,12 +1,61 @@
 
 import logging
 import json
+import plyvel
 
 log = logging.getLogger(__name__)
 
 
 
+class NSRLCreate:
+    key = None
+    
+    @classmethod
+    def create_database(cls, dbfile, records, **kwargs):
+        from csv import DictReader
+        csv_file = open(records, 'r')
+        csv_entries = DictReader(csv_file)
 
+        db = plyvel.DB(dbfile, **kwargs, create_if_missing=True)
+
+        for row in csv_entries:
+            key = bytes(row.pop(cls.key), 'utf-8')
+            value = db.get(key, None)
+
+            if not value:
+                db.put(key, bytes(row, 'utf-8'))
+                
+# ==================
+#  NSRL File Record
+# ==================
+
+class NSRLFile(NSRLCreate):
+
+    key = "SHA-1"
+
+# =================
+#  NSRL OS Record
+# =================
+
+class NSRLOs(NSRLCreate):
+
+    key = "OpSystemCode"
+
+# ================
+#  NSRL OS Record
+# ================
+
+class NSRLManufacturer(NSRLCreate):
+
+    key = "MfgCode"
+
+# =====================
+#  NSRL Product Record
+# =====================
+
+class NSRLProduct(NSRLCreate):
+
+    key = "ProductCode"
 
 
 if __name__ == '__main__':
@@ -20,27 +69,17 @@ if __name__ == '__main__':
     # defined functions
     ##########################################################################
 
-    nsrl_databases = [ 'file', 'os', 'manufacturer', 'product' ]
+    nsrl_databases = {
+        'file':         NSRLFile,
+        'os':           NSRLOs,
+        'manufacturer': NSRLManufacturer,
+        'product':      NSRLProduct,
+    }
 
     def nsrl_create_database(**kwargs):
         database_type = kwargs['type']
         nsrl_databases[database_type].create_database(kwargs['database'],
                                                       kwargs['filename'])
-
-
-    def readFromFile(**kwargs):
-        database_type = kwargs['type']
-        record = kwargs['filename']
-        db_path = kwargs['database']
-        print(database_type, " ", record, " ", db_path)
-        from csv import DictReader
-
-        csv_file = open(record, 'r')
-        csv_entries = DictReader(csv_file)
-
-        for row in csv_entries:
-            print(row['SHA-1'])
-            break
 
 
     ##########################################################################
@@ -72,7 +111,7 @@ if __name__ == '__main__':
     create_parser.add_argument('database',
                                type=str,
                                help='database to store NSRL records')
-    create_parser.set_defaults(func=readFromFile)
+    create_parser.set_defaults(func=nsrl_create_database)
 
     args = parser.parse_args()
 
