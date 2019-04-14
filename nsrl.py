@@ -154,7 +154,7 @@ if __name__ == '__main__':
     def nsrl_get(**kwargs):
         database_type = kwargs['type']
         database = nsrl_databases[database_type](kwargs['database'])
-        value = database.get(bytes(kwargs['key']))
+        value = database.get(kwargs['key'])
         print(("key {0}: value {1}".format(kwargs['key'], value)))
     
     def nnsrl_test(**kwargs):
