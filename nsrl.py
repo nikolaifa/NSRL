@@ -22,9 +22,9 @@ class NSRLCreate:
             for row in csv_entries:
                 key = bytes(row.pop(cls.key), 'utf-8')
                 value = db.get(key, None)
-                row = json.dumps(row).encode('utf-8')
-
+                
                 if not value:
+                    row = json.dumps(row).encode('utf-8')
                     db.put(key, row)
             
                 else:
