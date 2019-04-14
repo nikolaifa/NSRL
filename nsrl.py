@@ -38,7 +38,9 @@ if __name__ == '__main__':
         csv_file = open(record, 'r')
         csv_entries = DictReader(csv_file)
 
-        print(csv_entries[0]['SHA-1'])
+        for row in csv_entries:
+            print(row['SHA-1'])
+            break
 
 
     ##########################################################################
