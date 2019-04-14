@@ -30,9 +30,10 @@ class NSRLCreate:
                 else:
                     db.delete(key)
                     existing_entry = json.loads(value.decode('utf-8'))
-                    merged_entry = {key: value for (key, value) in dict(**existing_entry, **row).items() }
                     print("existing: ", existing_entry)
                     print("row: ", row)
+                    merged_entry = {key: value for (key, value) in dict(list(existing_entry.items()) + list(row.items()))}
+                    
                     print(merged_entry)
                     break
         except UnicodeDecodeError:
