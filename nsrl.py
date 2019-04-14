@@ -31,7 +31,7 @@ if __name__ == '__main__':
     def readFromFile(**kwargs):
         database_type = kwargs['type']
         record = kwargs['filename']
-        db_path = kwargs['database']wge
+        db_path = kwargs['database']
         print(database_type, " ", record, " ", db_path)
         from csv import DictReader
 
