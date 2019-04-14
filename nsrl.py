@@ -35,7 +35,7 @@ if __name__ == '__main__':
         print(database_type, " ", record, " ", db_path)
         from csv import DictReader
 
-        csv_file = open(records, 'r')
+        csv_file = open(record, 'r')
         csv_entries = DictReader(csv_file)
 
         print(csv_entries[0]['SHA-1'])
