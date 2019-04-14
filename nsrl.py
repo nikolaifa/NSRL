@@ -51,7 +51,7 @@ class NSRLCreate:
         self.db = plyvel.DB(db, **kwargs, create_if_missing=True)
 
     def get(self, db_key):
-        return self.db.get(bytes(db_key))
+        return self.db.get(bytes(db_key, 'utf-8'))
     
     @classmethod
     def create_database(cls, dbfile, records, **kwargs):
