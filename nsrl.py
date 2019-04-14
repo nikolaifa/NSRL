@@ -45,9 +45,14 @@ class NSRL(object):
 
 class NSRLCreate:
     key = None
-    
-#    def get(self, ):
+    db = None
 
+    def __init__(self, db, records, **kwargs):
+        db = plyvel.DB(db, **kwargs, create_if_missing=True)
+
+    def get(self, db_key):
+        return db.get(bytes(db_key))
+    
     @classmethod
     def create_database(cls, dbfile, records, **kwargs):
         i = 0
@@ -55,7 +60,9 @@ class NSRLCreate:
         csv_file = open(records, 'r')
         csv_entries = DictReader(csv_file)
 
-        db = DB(dbfile, **kwargs, create_if_missing=True)
+        if not db:
+            db = plyvel.DB(db, **kwargs, create_if_missing=True)
+
         try:
             for row in csv_entries:
                 key = bytes(row.pop(cls.key), 'utf-8')
@@ -69,14 +76,12 @@ class NSRLCreate:
                     db.delete(key)
                     existing_entry = json.loads(value.decode('utf-8'))
                     row = { key: value for (key, value) in dict(list(existing_entry.items()) + list(row.items())).items() }
-                    row = json.dumps(merged_entry).encode('utf-8')
+                    row = json.dumps(row).encode('utf-8')
                     db.put(key, row)
 
         except UnicodeDecodeError:
             i += 1
         print("Number of non-unicode hex: ", i)
-
-        return db
 
 # ==================
 #  NSRL File Record
@@ -87,7 +92,7 @@ class NSRLFile(NSRLCreate):
     key = "SHA-1"
     def __init__(self, db, **kwargs):
         # give default_dir value somewhere
-        super(NSRLFile, self).create_database(db, 'NSRLFile.txt', **kwargs)
+        super(NSRLFile, self).__init__(db, 'NSRLFile.txt', **kwargs)
 
 # =================
 #  NSRL OS Record
@@ -98,7 +103,7 @@ class NSRLOS(NSRLCreate):
     key = "OpSystemCode"
     def __init__(self, db, **kwargs):
         # give default_dir value somewhere
-        super(NSRLOS, self).create_database(db, 'NSRLOS.txt', **kwargs)
+        super(NSRLOS, self).__init__(db, 'NSRLOS.txt', **kwargs)
 
 # ================
 #  NSRL OS Record
@@ -109,7 +114,7 @@ class NSRLManufacturer(NSRLCreate):
     key = "MfgCode"
     def __init__(self, db, **kwargs):
         # give default_dir value somewhere
-        super(NSRLManufacturer, self).create_database(db, 'NSRLMfg.txt', **kwargs)
+        super(NSRLManufacturer, self).__init__(db, 'NSRLMfg.txt', **kwargs)
 
 # =====================
 #  NSRL Product Record
@@ -120,7 +125,7 @@ class NSRLProduct(NSRLCreate):
     key = "ProductCode"
     def __init__(self, db, **kwargs):
         # give default_dir value somewhere
-        super(NSRLProduct, self).create_database(db, 'NSRLProd.txt', **kwargs)
+        super(NSRLProduct, self).__init__(db, 'NSRLProd.txt', **kwargs)
 
 
 if __name__ == '__main__':
