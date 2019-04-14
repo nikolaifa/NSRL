@@ -29,7 +29,8 @@ class NSRLCreate:
             
                 else:
                     db.delete(key)
-                    existing_entry = json.load(value).decode('utf-8')
+                    value = value.decode('utf-8')
+                    existing_entry = json.load(value)
                     merged_entry = {key: value for (key, value) in (existing_entry.items() + row.items())}
                     print("existing: ", existing_entry)
                     print("row: ", row)
