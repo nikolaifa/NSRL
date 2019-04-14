@@ -23,8 +23,8 @@ class NSRLCreate:
             value = db.get(key, None)
 
             if not value:
-                db.put(key, bytes(row, 'utf-8'))
-                
+                db.put(key, json.dumps(row).encode('utf-8'))
+
 # ==================
 #  NSRL File Record
 # ==================
