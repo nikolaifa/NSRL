@@ -48,10 +48,10 @@ class NSRLCreate:
     db = None
 
     def __init__(self, db, records, **kwargs):
-        db = plyvel.DB(db, **kwargs, create_if_missing=True)
+        self.db = plyvel.DB(db, **kwargs, create_if_missing=True)
 
     def get(self, db_key):
-        return db.get(bytes(db_key))
+        return self.db.get(bytes(db_key))
     
     @classmethod
     def create_database(cls, dbfile, records, **kwargs):
