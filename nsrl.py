@@ -12,22 +12,25 @@ class NSRLCreate:
     
     @classmethod
     def create_database(cls, dbfile, records, **kwargs):
+        i = 0
         from csv import DictReader
         csv_file = open(records, 'r')
         csv_entries = DictReader(csv_file)
 
         db = plyvel.DB(dbfile, **kwargs, create_if_missing=True)
+        try:
+            for row in csv_entries:
+                key = bytes(row.pop(cls.key), 'utf-8')
+                value = db.get(key, None)
 
-        for row in csv_entries:
-            key = bytes(row.pop(cls.key), 'utf-8')
-            value = db.get(key, None)
-
-            if not value:
-                db.put(key, json.dumps(row).encode('utf-8'))
+                if not value:
+                    db.put(key, json.dumps(row).encode('utf-8'))
             
-            else:
-                print("test")
-
+                else:
+                    print("test")
+        except UnicodeDecodeError:
+            i += 1
+        print(i)
 # ==================
 #  NSRL File Record
 # ==================
