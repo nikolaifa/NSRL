@@ -53,7 +53,6 @@ class NSRL(object):
                     subkeys.update([x[key] for x in subitem])
                 for subkey in subkeys:
                     entries[key][subkey] = database.get(bytes(subkey))
-
         return entries
 
 
@@ -74,8 +73,7 @@ class NSRLCreate:
         csv_file = open(records, 'r')
         csv_entries = DictReader(csv_file)
 
-        if not db:
-            db = plyvel.DB(db, **kwargs, create_if_missing=True)
+        db = plyvel.DB(dbfile, **kwargs, create_if_missing=True)
 
         try:
             for row in csv_entries:
@@ -96,6 +94,7 @@ class NSRLCreate:
         except UnicodeDecodeError:
             i += 1
         print("Number of non-unicode hex: ", i)
+        db.close()
 
 # ==================
 #  NSRL File Record
