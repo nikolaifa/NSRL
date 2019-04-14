@@ -22,12 +22,19 @@ class NSRLCreate:
             for row in csv_entries:
                 key = bytes(row.pop(cls.key), 'utf-8')
                 value = db.get(key, None)
+                row = json.dumps(row).encode('utf-8')
 
                 if not value:
-                    db.put(key, json.dumps(row).encode('utf-8'))
+                    db.put(key, row)
             
                 else:
-                    print("test")
+                    db.delete(key)
+                    existing_entry = json.load(value).decode('utf-8')
+                    merged_entry = {key: value for (key, value) in (existing_entry.items() + row.items())}
+                    print("existing: ", existing_entry)
+                    print("row: ", row)
+                    print(merged_entry)
+                    break
         except UnicodeDecodeError:
             i += 1
         print(i)
